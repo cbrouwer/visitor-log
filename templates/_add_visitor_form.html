@@ -1,0 +1,25 @@
+<form
+  action="/marja/add_visitor"
+  method="post"
+  class="flex gap-2"
+  hx-post="/marja/add_visitor"
+  hx-target="#day-{{ date }}"
+  hx-swap="outerHTML"
+  onsubmit="storeDefaultVisitor(this)"
+  autocomplete="off"
+>
+  <input type="hidden" name="date" value="{{ date }}">
+  <input type="hidden" name="part_of_day" value="{{ english }}">
+  <input
+    name="visitor"
+    placeholder="naam"
+    class="flex-1 border rounded p-1"
+    onfocus="getDefaultVisitor(this.form)"
+    oninput="toggleAddButton(this)"
+    maxlength="60"
+    autocomplete="off"
+  >
+  <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 hidden">
+    ➕
+  </button>
+</form>

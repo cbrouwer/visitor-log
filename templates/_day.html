@@ -14,40 +14,43 @@
     {% for dutch, english in parts_of_day.items() %}
       <div class="flex-1">
         <h3 class="font-semibold text-sm text-gray-600">{{ dutch }}</h3>
-        {% set visitor = visitors.get(english) %}
-        {% if visitor %}
+        {% set time_slot_visitors = visitors.get(english, []) %}
+        {% set has_active = time_slot_visitors | selectattr('status', 'equalto', 'active') | list | length > 0 %}
+
+        {# Show active visitors first #}
+        {% for visitor in time_slot_visitors if visitor.status == 'active' %}
           <div class="text-gray-700 flex items-center justify-between">
             <span>• {{ visitor.visitor }}</span>
             {% if not is_past and english != 'evening' %}
             <button
               class="text-red-500 hover:underline text-sm"
               hx-post="/marja/delete_visitor/{{ visitor.id }}"
-              hx-confirm="Weet je zeker dat je deze bezoeker wilt verwijderen?"
+              hx-confirm="Weet je zeker dat je dit bezoek wilt annuleren?"
               hx-target="#day-{{ date }}"
               hx-swap="outerHTML"
             >❌</button>
             {% endif %}
           </div>
-        {% elif not is_past and english != 'evening' %}
-          <form
-            action="/marja/add_visitor"
-            method="post"
-            class="flex gap-2"
-            hx-post="/marja/add_visitor"
-            hx-target="#day-{{ date }}"
-            hx-swap="outerHTML"
-            onsubmit="storeDefaultVisitor(this)"
-            autocomplete="off"
-          >
-            <input type="hidden" name="date" value="{{ date }}">
-            <input type="hidden" name="part_of_day" value="{{ english }}">
-            <input name="visitor" placeholder="naam" class="flex-1 border rounded p-1" onfocus="getDefaultVisitor(this.form)" oninput="toggleAddButton(this)" maxlength="60" />
-            <button class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 hidden">➕</button>
-          </form>
-        {% elif not is_past and english == 'evening' %}
-            <p class="text-gray-400 text-sm italic">Tijdelijk uitgeschakeld</p>
-        {% else %}
-            <p class="text-gray-400 text-sm italic">Geen bezoeker</p>
+        {% endfor %}
+
+        {# Then show canceled visitors #}
+        {% for visitor in time_slot_visitors if visitor.status == 'canceled' %}
+          <div class="text-gray-700">
+            <span class="line-through text-gray-400">• {{ visitor.visitor }} (geannuleerd)</span>
+          </div>
+        {% endfor %}
+
+        {# Show add form if not evening, not past, and no active visitor #}
+        {% if not is_past and english != 'evening' and not has_active %}
+          {% with english=english, date=date %}
+            {% include "_add_visitor_form.html" %}
+          {% endwith %}
+        {% elif not time_slot_visitors and not is_past and english != 'evening' %}
+          {% with english=english, date=date %}
+            {% include "_add_visitor_form.html" %}
+          {% endwith %}
+        {% elif not time_slot_visitors %}
+          <p class="text-gray-400 text-sm italic">Geen bezoeker</p>
         {% endif %}
       </div>
     {% endfor %}
