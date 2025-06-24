@@ -83,6 +83,7 @@ def add_visitor():
             db.commit()
         except sqlite3.IntegrityError:
             # Visitor for this part of day already exists, ignore.
+            print("Visitor for this part of day already exists, ignoring. Date:", date_str, "Visitor:", visitor, "Part of day:", part_of_day)
             pass
 
     visitor_rows = db.execute("SELECT id, visitor, part_of_day FROM visitors WHERE date = ?", (date_str,)).fetchall()
@@ -94,6 +95,7 @@ def add_visitor():
 
 @app.route("/marja/delete_visitor/<int:visitor_id>", methods=["POST"])
 def delete_visitor(visitor_id):
+    print("Deleting visitor", visitor_id)
     db = get_db()
     row = db.execute("SELECT date FROM visitors WHERE id = ?", (visitor_id,)).fetchone()
     if row:
