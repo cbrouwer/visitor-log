@@ -1,0 +1,30 @@
+<div class="bg-white p-4 rounded shadow">
+  <h2 class="font-semibold text-lg">
+    {{ day if day is defined else date | format_dutch_date }}
+  </h2>
+
+  {% if day is defined %}
+    {% set note_list = notes_by_date.get(day.isoformat(), []) %}
+  {% else %}
+    {% set note_list = notes %}
+  {% endif %}
+
+  <ul class="mt-2 space-y-1">
+    {% for note in note_list %}
+      <li class="text-gray-700">• {{ note }}</li>
+    {% endfor %}
+  </ul>
+
+  <form
+    action="/add"
+    method="post"
+    class="mt-2 flex gap-2"
+    hx-post="/add"
+    hx-target="#day-{{ day.isoformat() if day is defined else date }}"
+    hx-swap="outerHTML"
+  >
+    <input type="hidden" name="date" value="{{ day.isoformat() if day is defined else date }}">
+    <input name="note" placeholder="naam" class="flex-1 border rounded p-1" />
+    <button class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">➕</button>
+  </form>
+</div>
