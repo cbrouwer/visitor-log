@@ -1,3 +1,4 @@
+{% set is_past = date < today.isoformat() %}
 <div id="day-{{ date }}" class="bg-white p-4 rounded shadow h-full flex flex-col"
   {% if not is_past %}
     hx-get="/day/{{ date }}"
@@ -8,7 +9,6 @@
   <h2 class="font-semibold text-lg">{{ date | format_dutch_date }}</h2>
 
   {% set parts_of_day = {'Ochtend': 'morning', 'Middag': 'afternoon', 'Avond': 'evening'} %}
-  {% set is_past = date < today.isoformat() %}
 
   <div class="mt-2 space-y-4 flex-grow">
     {% for dutch, english in parts_of_day.items() %}

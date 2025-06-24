@@ -5,7 +5,7 @@ import pytz
 from babel.dates import format_date
 
 app = Flask(__name__)
-DB_PATH = "visitors.db"
+DB_PATH = "db/visitors.db"
 CEST = pytz.timezone("Europe/Amsterdam")
 
 def get_db():
@@ -108,7 +108,7 @@ def delete_visitor(visitor_id):
 if __name__ == "__main__":
     with app.app_context():
         db = get_db()
-        db.execute("DROP TABLE IF EXISTS visitors")
+        #db.execute("DROP TABLE IF EXISTS visitors")
         db.execute("""
         CREATE TABLE IF NOT EXISTS visitors (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
