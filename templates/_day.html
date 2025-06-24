@@ -1,7 +1,7 @@
 {% set is_past = date < today.isoformat() %}
 <div id="day-{{ date }}" class="bg-white p-4 rounded shadow h-full flex flex-col"
   {% if not is_past %}
-    hx-get="/day/{{ date }}"
+    hx-get="/marja/day/{{ date }}"
     hx-trigger="every 30s"
     hx-swap="outerHTML"
   {% endif %}
@@ -21,7 +21,7 @@
             {% if not is_past and english != 'evening' %}
             <button
               class="text-red-500 hover:underline text-sm"
-              hx-post="/delete_visitor/{{ visitor.id }}"
+              hx-post="/marja/delete_visitor/{{ visitor.id }}"
               hx-confirm="Weet je zeker dat je deze bezoeker wilt verwijderen?"
               hx-target="#day-{{ date }}"
               hx-swap="outerHTML"
@@ -30,10 +30,10 @@
           </div>
         {% elif not is_past and english != 'evening' %}
           <form
-            action="/add_visitor"
+            action="/marja/add_visitor"
             method="post"
             class="flex gap-2"
-            hx-post="/add_visitor"
+            hx-post="/marja/add_visitor"
             hx-target="#day-{{ date }}"
             hx-swap="outerHTML"
             onsubmit="storeDefaultVisitor(this)"

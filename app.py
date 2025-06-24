@@ -35,7 +35,7 @@ def format_dutch_date(value):
         return value
     return format_date(value, format="full", locale="nl_NL")
 
-@app.route("/")
+@app.route("/marja/")
 def index():
     today = datetime.now(CEST).date()
     upcoming = [today + timedelta(days=i) for i in range(8)]
@@ -53,7 +53,7 @@ def index():
     # Render the HTML and pass in the required variables
     return render_template("index.html", upcoming=upcoming, past=past, visitors_by_date=visitors_by_date, today=today)
 
-@app.route("/day/<date_str>")
+@app.route("/marja/day/<date_str>")
 def get_day(date_str):
     try:
         datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -70,7 +70,7 @@ def get_day(date_str):
 
     return render_template("_day.html", date=date_str, visitors=visitors, today=today)
 
-@app.route("/add_visitor", methods=["POST"])
+@app.route("/marja/add_visitor", methods=["POST"])
 def add_visitor():
     db = get_db()
     date_str = request.form["date"]
@@ -92,7 +92,7 @@ def add_visitor():
 
     return render_template("_day.html", date=date_str, visitors=visitors, today=datetime.now(CEST).date())
 
-@app.route("/delete_visitor/<int:visitor_id>", methods=["POST"])
+@app.route("/marja/delete_visitor/<int:visitor_id>", methods=["POST"])
 def delete_visitor(visitor_id):
     db = get_db()
     row = db.execute("SELECT date FROM visitors WHERE id = ?", (visitor_id,)).fetchone()
