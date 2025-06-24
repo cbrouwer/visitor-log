@@ -38,7 +38,7 @@ def format_dutch_date(value):
 @app.route("/marja/")
 def index():
     today = datetime.now(CEST).date()
-    upcoming = [today + timedelta(days=i) for i in range(8)]
+    upcoming = [today + timedelta(days=i) for i in range(14)]
     past = [today - timedelta(days=i) for i in range(1, 8)]
     db = get_db()
     rows = db.execute("SELECT id, date, visitor, part_of_day FROM visitors WHERE date BETWEEN ? AND ?",
