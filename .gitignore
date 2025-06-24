@@ -1,3 +1,4 @@
 visitors.db
 venv
 .idea
+__pycache__

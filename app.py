@@ -3,6 +3,8 @@ import sqlite3
 from datetime import datetime, timedelta
 import pytz
 from babel.dates import format_date
+import click
+from flask.cli import with_appcontext
 
 app = Flask(__name__)
 DB_PATH = "db/visitors.db"
@@ -105,19 +107,23 @@ def delete_visitor(visitor_id):
         return render_template("_day.html", date=date_str, visitors=visitors, today=datetime.now(CEST).date())
     return "", 204
 
-if __name__ == "__main__":
-    with app.app_context():
-        db = get_db()
-        #db.execute("DROP TABLE IF EXISTS visitors")
-        db.execute("""
-        CREATE TABLE IF NOT EXISTS visitors (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT NOT NULL,
-            visitor TEXT NOT NULL,
-            part_of_day TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(date, part_of_day)
-        )
-        """)
-        db.commit()
-    app.run(debug=True)
+@click.command("init-db")
+@with_appcontext
+def init_db_command():
+    """Initializes the database."""
+    db = get_db()
+    #db.execute("DROP TABLE IF EXISTS visitors")
+    db.execute("""
+    CREATE TABLE IF NOT EXISTS visitors (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT NOT NULL,
+        visitor TEXT NOT NULL,
+        part_of_day TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(date, part_of_day)
+    )
+    """)
+    db.commit()
+    click.echo("Initialized the database.")
+
+app.cli.add_command(init_db_command)
