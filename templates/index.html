@@ -5,15 +5,30 @@
   <title>Notities per dag</title>
   <script src="https://unpkg.com/htmx.org@1.9.4"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/static/script.js" defer></script>
 </head>
 <body class="bg-gray-100 p-6">
-  <h1 class="text-2xl font-bold mb-6">Notities voor de komende 14 dagen</h1>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    {% for day in days %}
-    <div id="day-{{ day.isoformat() }}">
-      {% include "_day.html" with context %}
+  <details class="mb-6">
+    <summary class="text-xl font-semibold cursor-pointer">Vorige 7 dagen</summary>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-500 mt-4">
+      {% for day in past %}
+        {% with date=day.isoformat(), visitors=visitors_by_date.get(day.isoformat(), {}), today=today %}
+          {% include "_day.html" %}
+        {% endwith %}
+      {% endfor %}
     </div>
-    {% endfor %}
+  </details>
+
+  <h1 class="text-2xl font-bold mb-6">Bezoek Marja</h1>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {% for day in upcoming %}
+    <div id="day-container-{{ day.isoformat() }}">
+      {% with date=day.isoformat(), visitors=visitors_by_date.get(day.isoformat(), {}), today=today %}
+        {% include "_day.html" %}
+      {% endwith %}
+    </div>
+  {% endfor %}
   </div>
 </body>
 </html>

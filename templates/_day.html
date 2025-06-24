@@ -1,30 +1,55 @@
-<div class="bg-white p-4 rounded shadow">
-  <h2 class="font-semibold text-lg">
-    {{ day if day is defined else date | format_dutch_date }}
-  </h2>
-
-  {% if day is defined %}
-    {% set note_list = notes_by_date.get(day.isoformat(), []) %}
-  {% else %}
-    {% set note_list = notes %}
-  {% endif %}
-
-  <ul class="mt-2 space-y-1">
-    {% for note in note_list %}
-      <li class="text-gray-700">• {{ note }}</li>
-    {% endfor %}
-  </ul>
-
-  <form
-    action="/add"
-    method="post"
-    class="mt-2 flex gap-2"
-    hx-post="/add"
-    hx-target="#day-{{ day.isoformat() if day is defined else date }}"
+<div id="day-{{ date }}" class="bg-white p-4 rounded shadow h-full flex flex-col"
+  {% if not is_past %}
+    hx-get="/day/{{ date }}"
+    hx-trigger="every 30s"
     hx-swap="outerHTML"
-  >
-    <input type="hidden" name="date" value="{{ day.isoformat() if day is defined else date }}">
-    <input name="note" placeholder="naam" class="flex-1 border rounded p-1" />
-    <button class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">➕</button>
-  </form>
+  {% endif %}
+>
+  <h2 class="font-semibold text-lg">{{ date | format_dutch_date }}</h2>
+
+  {% set parts_of_day = {'Ochtend': 'morning', 'Middag': 'afternoon', 'Avond': 'evening'} %}
+  {% set is_past = date < today.isoformat() %}
+
+  <div class="mt-2 space-y-4 flex-grow">
+    {% for dutch, english in parts_of_day.items() %}
+      <div class="flex-1">
+        <h3 class="font-semibold text-sm text-gray-600">{{ dutch }}</h3>
+        {% set visitor = visitors.get(english) %}
+        {% if visitor %}
+          <div class="text-gray-700 flex items-center justify-between">
+            <span>• {{ visitor.visitor }}</span>
+            {% if not is_past and english != 'evening' %}
+            <button
+              class="text-red-500 hover:underline text-sm"
+              hx-post="/delete_visitor/{{ visitor.id }}"
+              hx-confirm="Weet je zeker dat je deze bezoeker wilt verwijderen?"
+              hx-target="#day-{{ date }}"
+              hx-swap="outerHTML"
+            >❌</button>
+            {% endif %}
+          </div>
+        {% elif not is_past and english != 'evening' %}
+          <form
+            action="/add_visitor"
+            method="post"
+            class="flex gap-2"
+            hx-post="/add_visitor"
+            hx-target="#day-{{ date }}"
+            hx-swap="outerHTML"
+            onsubmit="storeDefaultVisitor(this)"
+            autocomplete="off"
+          >
+            <input type="hidden" name="date" value="{{ date }}">
+            <input type="hidden" name="part_of_day" value="{{ english }}">
+            <input name="visitor" placeholder="naam" class="flex-1 border rounded p-1" onfocus="getDefaultVisitor(this.form)" oninput="toggleAddButton(this)" maxlength="60" />
+            <button class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 hidden">➕</button>
+          </form>
+        {% elif not is_past and english == 'evening' %}
+            <p class="text-gray-400 text-sm italic">Tijdelijk uitgeschakeld</p>
+        {% else %}
+            <p class="text-gray-400 text-sm italic">Geen bezoeker</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
 </div>
