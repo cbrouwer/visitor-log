@@ -24,4 +24,4 @@ ENV FLASK_APP=app.py
 RUN flask init-db
 
 # Run the application using Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--access-logfile", "-", "app:app"]
