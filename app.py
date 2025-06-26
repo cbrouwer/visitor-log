@@ -110,11 +110,7 @@ def delete_visitor(visitor_id):
 @app.route("/marja/update_visitor/<int:visitor_id>", methods=["POST"])
 def update_visitor(visitor_id):
     db = get_db()
-    visitor = request.form["visitor"].strip()
-    if not visitor:
-        return "Visitor name cannot be empty", 400
-
-    visitor = visitor[:255]
+    visitor = request.form["visitor"].strip()[:255]
     db.execute("UPDATE visitors SET visitor = ? WHERE id = ?", (visitor, visitor_id))
     db.commit()
 
