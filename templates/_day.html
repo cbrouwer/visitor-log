@@ -1,10 +1,7 @@
-{% set is_today = date == today.isoformat() %}
 <div id="day-{{ date }}" class="bg-white p-4 rounded shadow h-full flex flex-col"
-  {% if is_today %}
     hx-get="/marja/day/{{ date }}"
     hx-trigger="every 30s"
     hx-swap="outerHTML"
-  {% endif %}
 >
   <h2 class="font-semibold text-lg">{{ date | format_dutch_date }}</h2>
 
@@ -19,7 +16,6 @@
           <div class="text-gray-700 flex items-center justify-between group">
             <div class="visitor-display flex-1">
               <div class="whitespace-pre-line">{{ visitor.visitor }}</div>
-              {% if not is_today %}
                 <button
                   class="ml-2 mt-1 text-blue-500 hover:text-blue-700 text-sm inline-block"
                   data-visitor-id="{{ visitor.id }}"
@@ -27,7 +23,6 @@
                 >
                   ✏️
                 </button>
-              {% endif %}
             </div>
 
           </div>
@@ -57,11 +52,11 @@
               </div>
             </form>
           </div>
-        {% elif not is_today %}
+        {% else %}
           <form
             action="/marja/add_visitor"
             method="post"
-            class="flex flex-col gap-2"
+            class="flex flex-col gap-2 mt-2"
             hx-post="/marja/add_visitor"
             hx-target="#day-{{ date }}"
             hx-swap="outerHTML"
@@ -71,7 +66,7 @@
             <input type="hidden" name="part_of_day" value="{{ english }}">
             <textarea
               name="visitor"
-              placeholder="naam"
+              placeholder="Bezoekers"
               class="w-full border rounded p-1 min-h-[80px]"
               oninput="toggleAddButton(this)"
               maxlength="200"
@@ -80,8 +75,6 @@
               Toevoegen
             </button>
           </form>
-        {% else %}
-          <p class="text-gray-400 text-sm italic">Geen bezoeker</p>
         {% endif %}
       </div>
     {% endfor %}
