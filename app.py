@@ -74,15 +74,15 @@ def add_visitor():
     date_str = request.form["date"]
     visitor = request.form["visitor"].strip()
     part_of_day = request.form["part_of_day"]
-    if visitor:
-        visitor = visitor[:255]
-        try:
-            db.execute("INSERT INTO visitors (date, visitor, part_of_day) VALUES (?, ?, ?)", (date_str, visitor, part_of_day))
-            db.commit()
-        except sqlite3.IntegrityError:
-            # Visitor for this part of day already exists, ignore.
-            print("Visitor for this part of day already exists, ignoring. Date:", date_str, "Visitor:", visitor, "Part of day:", part_of_day)
-            pass
+
+    visitor = visitor[:255]  # Truncate to max length if needed
+    try:
+        db.execute("INSERT INTO visitors (date, visitor, part_of_day) VALUES (?, ?, ?)", (date_str, visitor, part_of_day))
+        db.commit()
+    except sqlite3.IntegrityError:
+        # Visitor for this part of day already exists, ignore.
+        print("Visitor for this part of day already exists, ignoring. Date:", date_str, "Visitor:", visitor, "Part of day:", part_of_day)
+        pass
 
     visitor_rows = db.execute("SELECT id, visitor, part_of_day FROM visitors WHERE date = ?", (date_str,)).fetchall()
     visitors = {}
@@ -110,21 +110,35 @@ def delete_visitor(visitor_id):
 @app.route("/marja/update_visitor/<int:visitor_id>", methods=["POST"])
 def update_visitor(visitor_id):
     db = get_db()
-    visitor = request.form["visitor"].strip()[:255]
-    db.execute("UPDATE visitors SET visitor = ? WHERE id = ?", (visitor, visitor_id))
+    visitor = request.form["visitor"].strip()
+
+    # If visitor is empty, delete the entry instead of updating
+    if not visitor:
+        # First get the date before deleting for the response
+        row = db.execute("SELECT date FROM visitors WHERE id = ?", (visitor_id,)).fetchone()
+        if not row:
+            return "", 204
+
+        date_str = row["date"]
+        db.execute("DELETE FROM visitors WHERE id = ?", (visitor_id,))
+    else:
+        # Update with the new visitor name (truncated to 255 chars)
+        visitor = visitor[:255]
+        db.execute("UPDATE visitors SET visitor = ? WHERE id = ?", (visitor, visitor_id))
+
     db.commit()
 
     # Return the updated visitor info
     row = db.execute("SELECT date, part_of_day FROM visitors WHERE id = ?", (visitor_id,)).fetchone()
     if row:
         date_str = row["date"]
-        visitor_rows = db.execute("SELECT id, visitor, part_of_day FROM visitors WHERE date = ?", (date_str,)).fetchall()
-        visitors = {}
-        for r in visitor_rows:
-            visitors[r["part_of_day"]] = dict(id=r["id"], visitor=r["visitor"])
-        return render_template("_day.html", date=date_str, visitors=visitors, today=datetime.now(CEST).date())
 
-    return "", 204
+    # If we don't have a row (because we deleted it), use the date we got before deletion
+    visitor_rows = db.execute("SELECT id, visitor, part_of_day FROM visitors WHERE date = ?", (date_str,)).fetchall()
+    visitors = {}
+    for r in visitor_rows:
+        visitors[r["part_of_day"]] = dict(id=r["id"], visitor=r["visitor"])
+    return render_template("_day.html", date=date_str, visitors=visitors, today=datetime.now(CEST).date())
 
 @click.command("init-db")
 @with_appcontext
