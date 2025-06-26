@@ -38,11 +38,10 @@ def format_dutch_date(value):
 @app.route("/marja/")
 def index():
     today = datetime.now(CEST).date()
-    upcoming = [today + timedelta(days=i) for i in range(14)]
-    past = [today - timedelta(days=i) for i in range(1, 8)]
+    upcoming = [today + timedelta(days=i) for i in range(7)]  # Only next 7 days
     db = get_db()
     rows = db.execute("SELECT id, date, visitor, part_of_day FROM visitors WHERE date BETWEEN ? AND ?",
-                      ((today - timedelta(days=7)).isoformat(), (today + timedelta(days=13)).isoformat())).fetchall()
+                      (today.isoformat(), (today + timedelta(days=6)).isoformat())).fetchall()
     visitors_by_date = {}
     for row in rows:
         date_str = row["date"]
@@ -50,8 +49,7 @@ def index():
             visitors_by_date[date_str] = {}
         visitors_by_date[date_str][row["part_of_day"]] = dict(id=row["id"], visitor=row["visitor"])
 
-    # Render the HTML and pass in the required variables
-    return render_template("index.html", upcoming=upcoming, past=past, visitors_by_date=visitors_by_date, today=today)
+    return render_template("index.html", upcoming=upcoming, visitors_by_date=visitors_by_date, today=today)
 
 @app.route("/marja/day/<date_str>")
 def get_day(date_str):
@@ -77,7 +75,7 @@ def add_visitor():
     visitor = request.form["visitor"].strip()
     part_of_day = request.form["part_of_day"]
     if visitor:
-        visitor = visitor[:60]
+        visitor = visitor[:255]
         try:
             db.execute("INSERT INTO visitors (date, visitor, part_of_day) VALUES (?, ?, ?)", (date_str, visitor, part_of_day))
             db.commit()
@@ -109,6 +107,29 @@ def delete_visitor(visitor_id):
         return render_template("_day.html", date=date_str, visitors=visitors, today=datetime.now(CEST).date())
     return "", 204
 
+@app.route("/marja/update_visitor/<int:visitor_id>", methods=["POST"])
+def update_visitor(visitor_id):
+    db = get_db()
+    visitor = request.form["visitor"].strip()
+    if not visitor:
+        return "Visitor name cannot be empty", 400
+
+    visitor = visitor[:255]
+    db.execute("UPDATE visitors SET visitor = ? WHERE id = ?", (visitor, visitor_id))
+    db.commit()
+
+    # Return the updated visitor info
+    row = db.execute("SELECT date, part_of_day FROM visitors WHERE id = ?", (visitor_id,)).fetchone()
+    if row:
+        date_str = row["date"]
+        visitor_rows = db.execute("SELECT id, visitor, part_of_day FROM visitors WHERE date = ?", (date_str,)).fetchall()
+        visitors = {}
+        for r in visitor_rows:
+            visitors[r["part_of_day"]] = dict(id=r["id"], visitor=r["visitor"])
+        return render_template("_day.html", date=date_str, visitors=visitors, today=datetime.now(CEST).date())
+
+    return "", 204
+
 @click.command("init-db")
 @with_appcontext
 def init_db_command():
@@ -125,6 +146,7 @@ def init_db_command():
         UNIQUE(date, part_of_day)
     )
     """)
+    db.execute("ALTER TABLE visitors ADD COLUMN visitor_long TEXT")
     db.commit()
     click.echo("Initialized the database.")
 

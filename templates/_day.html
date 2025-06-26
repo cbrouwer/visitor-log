@@ -1,6 +1,6 @@
-{% set is_past = date < today.isoformat() %}
+{% set is_today = date == today.isoformat() %}
 <div id="day-{{ date }}" class="bg-white p-4 rounded shadow h-full flex flex-col"
-  {% if not is_past %}
+  {% if is_today %}
     hx-get="/marja/day/{{ date }}"
     hx-trigger="every 30s"
     hx-swap="outerHTML"
@@ -13,41 +13,77 @@
   <div class="mt-2 space-y-4 flex-grow">
     {% for dutch, english in parts_of_day.items() %}
       <div class="flex-1">
-        <h3 class="font-semibold text-sm text-gray-600">{{ dutch }}</h3>
+        <h3 class="font-bold text-sm text-gray-600">{{ dutch }}</h3>
         {% set visitor = visitors.get(english) %}
         {% if visitor %}
-          <div class="text-gray-700 flex items-center justify-between">
-            <span>• {{ visitor.visitor }}</span>
-            {% if not is_past and english != 'evening' %}
-            <button
-              class="text-red-500 hover:underline text-sm"
-              hx-post="/marja/delete_visitor/{{ visitor.id }}"
-              hx-confirm="Weet je zeker dat je deze bezoeker wilt verwijderen?"
+          <div class="text-gray-700 flex items-center justify-between group">
+            <div class="visitor-display flex-1">
+              <div class="whitespace-pre-line">• {{ visitor.visitor }}</div>
+              {% if not is_today %}
+                <button
+                  class="ml-2 mt-1 text-blue-500 hover:text-blue-700 text-sm inline-block"
+                  data-visitor-id="{{ visitor.id }}"
+                  onclick="editVisitor(this)"
+                >
+                  ✏️
+                </button>
+              {% endif %}
+            </div>
+
+          </div>
+          <div class="visitor-edit hidden mt-1">
+            <form
+              class="flex flex-col gap-2"
+              hx-post="/marja/update_visitor/{{ visitor.id }}"
               hx-target="#day-{{ date }}"
               hx-swap="outerHTML"
-            >❌</button>
-            {% endif %}
+            >
+              <textarea
+                name="visitor"
+                class="w-full border rounded p-1 min-h-[80px]"
+                maxlength="200"
+                required
+              >{{ visitor.visitor }}</textarea>
+              <div class="flex gap-2">
+                <button type="submit" class="flex-1 bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
+                  Opslaan
+                </button>
+                <button
+                  type="button"
+                  class="flex-1 bg-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-400"
+                  onclick="cancelEdit(this)"
+                >
+                  Annuleren
+                </button>
+              </div>
+            </form>
           </div>
-        {% elif not is_past and english != 'evening' %}
+        {% elif not is_today %}
           <form
             action="/marja/add_visitor"
             method="post"
-            class="flex gap-2"
+            class="flex flex-col gap-2"
             hx-post="/marja/add_visitor"
             hx-target="#day-{{ date }}"
             hx-swap="outerHTML"
-            onsubmit="storeDefaultVisitor(this)"
             autocomplete="off"
           >
             <input type="hidden" name="date" value="{{ date }}">
             <input type="hidden" name="part_of_day" value="{{ english }}">
-            <input name="visitor" placeholder="naam" class="flex-1 border rounded p-1" onfocus="getDefaultVisitor(this.form)" oninput="toggleAddButton(this)" maxlength="60" />
-            <button class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 hidden">➕</button>
+            <textarea
+              name="visitor"
+              placeholder="naam"
+              class="w-full border rounded p-1 min-h-[80px]"
+              oninput="toggleAddButton(this)"
+              maxlength="200"
+              required
+            ></textarea>
+            <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 hidden">
+              Toevoegen
+            </button>
           </form>
-        {% elif not is_past and english == 'evening' %}
-            <p class="text-gray-400 text-sm italic">Tijdelijk uitgeschakeld</p>
         {% else %}
-            <p class="text-gray-400 text-sm italic">Geen bezoeker</p>
+          <p class="text-gray-400 text-sm italic">Geen bezoeker</p>
         {% endif %}
       </div>
     {% endfor %}
